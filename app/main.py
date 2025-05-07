@@ -40,8 +40,13 @@ async def log_requests(request: Request, call_next):
 @app.get("/")
 async def read_root(request: Request):
     try:
-        # Get client IP and headers for debugging
+        # Get client IP from various headers
         client_host = request.client.host if request.client else "unknown"
+        cf_connecting_ip = request.headers.get("CF-Connecting-IP", "not set")
+        x_forwarded_for = request.headers.get("X-Forwarded-For", "not set")
+        x_real_ip = request.headers.get("X-Real-IP", "not set")
+        
+        # Get all headers for debugging
         headers = dict(request.headers)
         
         # Get server information
@@ -53,9 +58,15 @@ async def read_root(request: Request):
             "HOST": os.getenv("HOST", "0.0.0.0"),
             "PORT": os.getenv("PORT", "8051"),
             "PYTHONPATH": os.getenv("PYTHONPATH", ""),
+            "FORWARDED_ALLOW_IPS": os.getenv("FORWARDED_ALLOW_IPS", "not set"),
+            "PROXY_HEADERS": os.getenv("PROXY_HEADERS", "not set"),
+            "TRUSTED_PROXIES": os.getenv("TRUSTED_PROXIES", "not set"),
         }
         
         logger.info(f"Client host: {client_host}")
+        logger.info(f"CF-Connecting-IP: {cf_connecting_ip}")
+        logger.info(f"X-Forwarded-For: {x_forwarded_for}")
+        logger.info(f"X-Real-IP: {x_real_ip}")
         logger.info(f"Headers: {headers}")
         logger.info(f"Server hostname: {hostname}")
         logger.info(f"Server IP: {ip_address}")
@@ -63,7 +74,12 @@ async def read_root(request: Request):
         
         return {
             "message": "Hello from FastAPI2!",
-            "client_host": client_host,
+            "client_info": {
+                "client_host": client_host,
+                "cf_connecting_ip": cf_connecting_ip,
+                "x_forwarded_for": x_forwarded_for,
+                "x_real_ip": x_real_ip
+            },
             "headers": headers,
             "server_info": {
                 "hostname": hostname,

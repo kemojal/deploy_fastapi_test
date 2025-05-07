@@ -54,14 +54,15 @@ jobs:
             # Build new image
             docker build -t fastapi-app .
             
-            # Run the container with explicit port mapping and health check
+            # Run the container with Cloudflare proxy settings
             docker run -d --name fastapi-app \
               -p 8051:8051 \
               --restart unless-stopped \
-              --health-cmd "curl -f http://localhost:8051/ || exit 1" \
-              --health-interval 30s \
-              --health-timeout 10s \
-              --health-retries 3 \
+              -e FORWARDED_ALLOW_IPS="*" \
+              -e PROXY_HEADERS="true" \
+              -e TRUSTED_PROXIES="*" \
+              -e REAL_IP_HEADER="CF-Connecting-IP" \
+              -e FORWARDED_FOR_HEADER="CF-Connecting-IP" \
               fastapi-app
             
             # Wait for container to start
@@ -86,6 +87,14 @@ jobs:
             echo "Testing local connection..."
             curl -v --connect-timeout 5 --max-time 10 http://localhost:8051/
             
+            # Test with Cloudflare headers
+            echo "Testing with Cloudflare headers..."
+            curl -v --connect-timeout 5 --max-time 10 \
+              -H "CF-Connecting-IP: 1.2.3.4" \
+              -H "X-Forwarded-For: 1.2.3.4" \
+              -H "X-Forwarded-Proto: https" \
+              http://localhost:8051/
+            
             # Check container logs for any errors
             echo "Checking container logs for errors..."
             docker logs fastapi-app | grep -i error
@@ -93,10 +102,6 @@ jobs:
             # Check if the container is healthy
             echo "Checking container health..."
             docker inspect fastapi-app | grep -A 10 Health
-            
-            # Check network connectivity from host
-            echo "Checking network connectivity from host..."
-            curl -v --connect-timeout 5 --max-time 10 http://localhost:8051/
             
             # Check if port is actually listening
             echo "Checking if port is listening..."
