@@ -11,8 +11,12 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy source code
 COPY app/ .
 
-# Expose port
-EXPOSE 8000
+# Set environment variables
+ENV PORT=8051
+ENV HOST=0.0.0.0
 
-# Run the app with proxy headers enabled
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--proxy-headers", "--forwarded-allow-ips", "*"]
+# Expose the port
+EXPOSE 8051
+
+# Run the application with the correct port
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8051", "--proxy-headers", "--forwarded-allow-ips", "*", "--log-level", "debug"]
