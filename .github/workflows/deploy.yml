@@ -18,8 +18,11 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
-      - name: Debug SSH
+      - name: Debug SSH Setup
         run: |
+          echo "SSH_AUTH_SOCK: $SSH_AUTH_SOCK"
+          echo "SSH_AGENT_PID: $SSH_AGENT_PID"
+          ssh-add -l
           echo "Testing SSH connection..."
           ssh -v -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "echo 'SSH connection successful'"
 
