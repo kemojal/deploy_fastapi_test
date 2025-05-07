@@ -14,5 +14,5 @@ COPY app/ .
 # Expose port
 EXPOSE 8000
 
-# Run the app
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Run the app with proxy headers enabled
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--proxy-headers", "--forwarded-allow-ips", "*"]
