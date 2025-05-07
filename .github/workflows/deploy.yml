@@ -46,6 +46,9 @@ jobs:
             # Kill any process using port 8000
             sudo fuser -k 8000/tcp || true
             
+            # Allow port 3000 in firewall
+            sudo ufw allow 3000/tcp
+            
             # Build new image
             docker build -t fastapi-app .
             
@@ -65,4 +68,8 @@ jobs:
             # Print the URL
             echo "Application should be running on:"
             echo "http://$(hostname -I | awk '{print $1}'):3000"
+            
+            # Test the connection locally
+            echo "Testing local connection..."
+            curl -v http://localhost:3000/
           EOF
