@@ -52,9 +52,12 @@ jobs:
             # Build new image
             docker build -t fastapi-app .
             
-            # Run the container with port 8051 and proper headers for Cloudflare
+            # Create a new network if it doesn't exist
+            docker network create fastapi-network || true
+            
+            # Run the container with host network mode
             docker run -d --name fastapi-app \
-              -p 8051:8000 \
+              --network host \
               -e FORWARDED_ALLOW_IPS="*" \
               -e PROXY_HEADERS="true" \
               fastapi-app
@@ -81,4 +84,12 @@ jobs:
             # Check container logs for any errors
             echo "Checking container logs for errors..."
             docker logs fastapi-app | grep -i error
+            
+            # Check if the container is healthy
+            echo "Checking container health..."
+            docker inspect fastapi-app | grep -A 10 Health
+            
+            # Check network connectivity
+            echo "Checking network connectivity..."
+            docker exec fastapi-app curl -v http://localhost:8051/
           EOF

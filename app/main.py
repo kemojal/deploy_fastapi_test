@@ -4,6 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 import uvicorn
 import logging
+import socket
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -42,13 +43,23 @@ async def read_root(request: Request):
         client_host = request.client.host if request.client else "unknown"
         headers = dict(request.headers)
         
+        # Get server information
+        hostname = socket.gethostname()
+        ip_address = socket.gethostbyname(hostname)
+        
         logger.info(f"Client host: {client_host}")
         logger.info(f"Headers: {headers}")
+        logger.info(f"Server hostname: {hostname}")
+        logger.info(f"Server IP: {ip_address}")
         
         return {
             "message": "Hello from FastAPI!",
             "client_host": client_host,
             "headers": headers,
+            "server_info": {
+                "hostname": hostname,
+                "ip_address": ip_address
+            },
             "status": "success"
         }
     except Exception as e:
@@ -66,8 +77,9 @@ if __name__ == "__main__":
     uvicorn.run(
         "main:app",
         host="0.0.0.0",
-        port=8000,
+        port=8051,  # Changed to match the port we're using
         proxy_headers=True,
         forwarded_allow_ips="*",
-        log_level="debug"
+        log_level="debug",
+        reload=True  # Enable auto-reload for debugging
     )
