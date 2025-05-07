@@ -1,0 +1,36 @@
+name: Deploy FastAPI to VPS
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up SSH
+        uses: webfactory/ssh-agent@v0.7.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Copy files to VPS
+        run: |
+          ssh -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} << 'EOF'
+            cd ~/deploy_fastapi_test || mkdir ~/deploy_fastapi_test && cd ~/deploy_fastapi_test
+            rm -rf ./*
+          EOF
+          scp -r ./* ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:~/deploy_fastapi_test
+
+      - name: Deploy with Docker
+        run: |
+          ssh ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} << 'EOF'
+            cd ~/deploy_fastapi_test
+            docker build -t fastapi-app .
+            docker stop fastapi-app || true && docker rm fastapi-app || true
+            docker run -d --name fastapi-app -p 80:8000 fastapi-app
+          EOF
