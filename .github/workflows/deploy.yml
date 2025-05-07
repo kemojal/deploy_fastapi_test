@@ -46,14 +46,14 @@ jobs:
             # Kill any process using port 8000
             sudo fuser -k 8000/tcp || true
             
-            # Allow port 3000 in firewall
-            sudo ufw allow 3000/tcp
+            # Allow port 8050 in firewall
+            sudo ufw allow 8050/tcp
             
             # Build new image
             docker build -t fastapi-app .
             
-            # Run the container with a different port
-            docker run -d --name fastapi-app -p 3000:8000 fastapi-app
+            # Run the container with port 8050
+            docker run -d --name fastapi-app -p 8050:8000 fastapi-app
             
             # Print debugging information
             echo "Container status:"
@@ -61,15 +61,15 @@ jobs:
             echo "Container logs:"
             docker logs fastapi-app
             echo "Network information:"
-            netstat -tulpn | grep -E ':3000|:8000'
+            netstat -tulpn | grep -E ':8050|:8000'
             echo "Firewall status:"
             sudo ufw status
             
             # Print the URL
             echo "Application should be running on:"
-            echo "http://$(hostname -I | awk '{print $1}'):3000"
+            echo "http://$(hostname -I | awk '{print $1}'):8050"
             
             # Test the connection locally
             echo "Testing local connection..."
-            curl -v http://localhost:3000/
+            curl -v http://localhost:8050/
           EOF
