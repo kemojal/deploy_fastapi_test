@@ -53,7 +53,7 @@ async def read_root(request: Request):
         logger.info(f"Server IP: {ip_address}")
         
         return {
-            "message": "Hello from FastAPI!",
+            "message": "Hello from FastAPI2!",
             "client_host": client_host,
             "headers": headers,
             "server_info": {
