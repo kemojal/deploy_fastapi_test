@@ -52,8 +52,12 @@ jobs:
             # Build new image
             docker build -t fastapi-app .
             
-            # Run the container with port 8050
-            docker run -d --name fastapi-app -p 8050:8000 fastapi-app
+            # Run the container with port 8050 and proper headers for Cloudflare
+            docker run -d --name fastapi-app \
+              -p 8050:8000 \
+              -e FORWARDED_ALLOW_IPS="*" \
+              -e PROXY_HEADERS="true" \
+              fastapi-app
             
             # Print debugging information
             echo "Container status:"
@@ -65,9 +69,10 @@ jobs:
             echo "Firewall status:"
             sudo ufw status
             
-            # Print the URL
-            echo "Application should be running on:"
+            # Print the URLs
+            echo "Application is running on:"
             echo "http://$(hostname -I | awk '{print $1}'):8050"
+            echo "https://api.demo.kemojallow.com"
             
             # Test the connection locally
             echo "Testing local connection..."
