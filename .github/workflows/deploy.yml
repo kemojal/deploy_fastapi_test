@@ -43,18 +43,18 @@ jobs:
             docker stop fastapi-app || true
             docker rm fastapi-app || true
             
-            # Kill any process using port 8000
-            sudo fuser -k 8000/tcp || true
+            # Kill any process using port 8051
+            sudo fuser -k 8051/tcp || true
             
-            # Allow port 8050 in firewall
-            sudo ufw allow 8050/tcp
+            # Allow port 8051 in firewall
+            sudo ufw allow 8051/tcp
             
             # Build new image
             docker build -t fastapi-app .
             
-            # Run the container with port 8050 and proper headers for Cloudflare
+            # Run the container with port 8051 and proper headers for Cloudflare
             docker run -d --name fastapi-app \
-              -p 8050:8000 \
+              -p 8051:8000 \
               -e FORWARDED_ALLOW_IPS="*" \
               -e PROXY_HEADERS="true" \
               fastapi-app
@@ -65,16 +65,20 @@ jobs:
             echo "Container logs:"
             docker logs fastapi-app
             echo "Network information:"
-            netstat -tulpn | grep -E ':8050|:8000'
+            netstat -tulpn | grep -E ':8051|:8000'
             echo "Firewall status:"
             sudo ufw status
             
             # Print the URLs
             echo "Application is running on:"
-            echo "http://$(hostname -I | awk '{print $1}'):8050"
+            echo "http://$(hostname -I | awk '{print $1}'):8051"
             echo "https://api.demo.kemojallow.com"
             
             # Test the connection locally
             echo "Testing local connection..."
-            curl -v http://localhost:8050/
+            curl -v http://localhost:8051/
+            
+            # Check container logs for any errors
+            echo "Checking container logs for errors..."
+            docker logs fastapi-app | grep -i error
           EOF
