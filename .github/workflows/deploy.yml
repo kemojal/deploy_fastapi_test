@@ -54,10 +54,20 @@ jobs:
               PORT=80
             fi
             
-            # Run the container
-            docker run -d --name fastapi-app -p $PORT:8000 fastapi-app
+            # Run the container with host network mode
+            docker run -d --name fastapi-app --network host fastapi-app
+            
+            # Print debugging information
+            echo "Container status:"
+            docker ps
+            echo "Container logs:"
+            docker logs fastapi-app
+            echo "Network information:"
+            netstat -tulpn | grep -E ':80|:8080'
+            echo "Firewall status:"
+            sudo ufw status
             
             # Print the URL
-            echo "Application is running on port $PORT"
-            echo "You can access it at: http://$(hostname -I | awk '{print $1}'):$PORT"
+            echo "Application should be running on:"
+            echo "http://$(hostname -I | awk '{print $1}'):8000"
           EOF
