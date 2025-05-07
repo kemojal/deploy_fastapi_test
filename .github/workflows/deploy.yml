@@ -46,21 +46,26 @@ jobs:
             # Kill any process using port 8051
             sudo fuser -k 8051/tcp || true
             
-            # Allow port 8051 in firewall
+            # Enable and configure firewall
+            sudo ufw --force enable
             sudo ufw allow 8051/tcp
+            sudo ufw allow 22/tcp
             
             # Build new image
             docker build -t fastapi-app .
             
-            # Create a new network if it doesn't exist
-            docker network create fastapi-network || true
-            
-            # Run the container with host network mode
+            # Run the container with explicit port mapping and health check
             docker run -d --name fastapi-app \
-              --network host \
-              -e FORWARDED_ALLOW_IPS="*" \
-              -e PROXY_HEADERS="true" \
+              -p 8051:8051 \
+              --restart unless-stopped \
+              --health-cmd "curl -f http://localhost:8051/ || exit 1" \
+              --health-interval 30s \
+              --health-timeout 10s \
+              --health-retries 3 \
               fastapi-app
+            
+            # Wait for container to start
+            sleep 10
             
             # Print debugging information
             echo "Container status:"
@@ -68,7 +73,7 @@ jobs:
             echo "Container logs:"
             docker logs fastapi-app
             echo "Network information:"
-            netstat -tulpn | grep -E ':8051|:8000'
+            netstat -tulpn | grep -E ':8051'
             echo "Firewall status:"
             sudo ufw status
             
@@ -77,9 +82,9 @@ jobs:
             echo "http://$(hostname -I | awk '{print $1}'):8051"
             echo "https://api.demo.kemojallow.com"
             
-            # Test the connection locally
+            # Test the connection locally with timeout
             echo "Testing local connection..."
-            curl -v http://localhost:8051/
+            curl -v --connect-timeout 5 --max-time 10 http://localhost:8051/
             
             # Check container logs for any errors
             echo "Checking container logs for errors..."
@@ -89,7 +94,11 @@ jobs:
             echo "Checking container health..."
             docker inspect fastapi-app | grep -A 10 Health
             
-            # Check network connectivity
-            echo "Checking network connectivity..."
-            docker exec fastapi-app curl -v http://localhost:8051/
+            # Check network connectivity from host
+            echo "Checking network connectivity from host..."
+            curl -v --connect-timeout 5 --max-time 10 http://localhost:8051/
+            
+            # Check if port is actually listening
+            echo "Checking if port is listening..."
+            sudo lsof -i :8051
           EOF
