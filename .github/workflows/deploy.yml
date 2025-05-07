@@ -43,19 +43,14 @@ jobs:
             docker stop fastapi-app || true
             docker rm fastapi-app || true
             
+            # Kill any process using port 8000
+            sudo fuser -k 8000/tcp || true
+            
             # Build new image
             docker build -t fastapi-app .
             
-            # Check if port 80 is in use
-            if lsof -i :80 > /dev/null; then
-              echo "Port 80 is in use. Using port 8080 instead..."
-              PORT=8080
-            else
-              PORT=80
-            fi
-            
-            # Run the container with host network mode
-            docker run -d --name fastapi-app --network host fastapi-app
+            # Run the container with a different port
+            docker run -d --name fastapi-app -p 3000:8000 fastapi-app
             
             # Print debugging information
             echo "Container status:"
@@ -63,11 +58,11 @@ jobs:
             echo "Container logs:"
             docker logs fastapi-app
             echo "Network information:"
-            netstat -tulpn | grep -E ':80|:8080'
+            netstat -tulpn | grep -E ':3000|:8000'
             echo "Firewall status:"
             sudo ufw status
             
             # Print the URL
             echo "Application should be running on:"
-            echo "http://$(hostname -I | awk '{print $1}'):8000"
+            echo "http://$(hostname -I | awk '{print $1}'):3000"
           EOF
