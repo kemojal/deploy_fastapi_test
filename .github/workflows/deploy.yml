@@ -38,7 +38,26 @@ jobs:
         run: |
           ssh ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} << 'EOF'
             cd ~/deploy_fastapi_test
+            
+            # Stop and remove existing container
+            docker stop fastapi-app || true
+            docker rm fastapi-app || true
+            
+            # Build new image
             docker build -t fastapi-app .
-            docker stop fastapi-app || true && docker rm fastapi-app || true
-            docker run -d --name fastapi-app -p 80:8000 fastapi-app
+            
+            # Check if port 80 is in use
+            if lsof -i :80 > /dev/null; then
+              echo "Port 80 is in use. Using port 8080 instead..."
+              PORT=8080
+            else
+              PORT=80
+            fi
+            
+            # Run the container
+            docker run -d --name fastapi-app -p $PORT:8000 fastapi-app
+            
+            # Print the URL
+            echo "Application is running on port $PORT"
+            echo "You can access it at: http://$(hostname -I | awk '{print $1}'):$PORT"
           EOF
